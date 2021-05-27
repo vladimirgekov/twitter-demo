@@ -14,7 +14,7 @@
     </div>
 
     <div class="register">
-      <div class="register__title">Register</div>
+      <div class="register__title">Registration</div>
       <form class="register__form">
         <div class="register__data">
           <div class="register__text">Enter your user name</div>
@@ -33,7 +33,7 @@
           <input class="register__input" type="password" id="confirm_password" placeholder="confirm password" v-model="confirmPassword"/>
         </div>
       </form>
-      <button v-on:click="register" class="register__button">Registration</button>
+      <button v-on:click="register" class="register__button">Register</button>
     </div>
 
     <div class="footer">
