@@ -30,7 +30,7 @@
         </div>
         <div class="register__data">
           <div class="register__text">Confirm your password</div>
-          <input class="register__input" type="password" placeholder="confirm password"/>
+          <input class="register__input" type="password" id="confirm_password" placeholder="confirm password" v-model="confirmPassword"/>
         </div>
       </form>
       <button v-on:click="register" class="register__button">Register</button>
@@ -60,12 +60,14 @@ export default {
     return {
       email: "",
       password: "",
+      confirmPassword: "",
       displayname: "",
       isLoggedIn: false
     };
   },
   methods: {
     register: function(e) {
+      if(this.password===this.confirmPassword){
       firebase
         .auth()
         .createUserWithEmailAndPassword(this.email, this.password)
@@ -73,6 +75,9 @@ export default {
           this.$router.push("/");
         });
       e.preventDefault();
+      } else {
+        alert("Password does not matched!");
+      }
     }
   }
 };
