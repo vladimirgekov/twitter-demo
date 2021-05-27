@@ -33,7 +33,7 @@
           <input class="register__input" type="password" id="confirm_password" placeholder="confirm password" v-model="confirmPassword"/>
         </div>
       </form>
-      <button v-on:click="register" class="register__button">Register</button>
+      <button v-on:click="register" class="register__button">Registration</button>
     </div>
 
     <div class="footer">
