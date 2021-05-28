@@ -5,7 +5,7 @@
         <p class="header__title">Chat application</p>
         <img class="header__image" src="../assets/chat.svg" />
       </div>
-      <p class="header__text" v-if="isLoggedIn">Welcome, {{currentUser.email}}</p>
+      <p class="header__text" v-if="currentUser">Welcome,{{ currentUser.email }}</p>
       <div class="header__right">
         <nuxt-link to="/login" v:else><p class="header__options" v-if="!isLoggedIn">Login</p></nuxt-link>
         <nuxt-link to="/register"><p class="header__options" v-if="!isLoggedIn">Register</p></nuxt-link>
@@ -36,10 +36,10 @@
             <img class="main__form__user__photo" src="../assets/user-big.png" />
             <h2 class="tweets__name">{{ tweet.username }} post:</h2>
           </div>
-          <p class="tweets__content">{{ tweet.content }}</p>
+          <p class="tweets__content">{{ tweet.tweetContent }}</p>
           <div class="button-container">
-            <img :src=" `${tweet.like ? require('../assets/star.png') : require('../assets/emptystar.png')}`" 
-            v-on:click="() => like(tweet.id)" :key="tweet.id"/>
+            <img :src="`${tweet.isLiked ? require('../assets/star.png'): require('../assets/emptystar.png')}`"
+              v-on:click="() => like(tweet.id)" :key="tweet.id"/>
           </div>
         </div>
       </div>
@@ -62,39 +62,57 @@
 
 <script>
 import firebase from 'firebase';
+import { auth, StoreDB } from "~/plugins/firebase.js";
 export default {
-  name: 'navbar',
   data() {
     return {
       newName: "",
       newContent: "",
       tweets: [],
       isLoggedIn: false,
-      currentUser: false,
+      currentUser: false
     };
   },
-  created(){
+  async created() {
     if(firebase.auth().currentUser){
       this.isLoggedIn = true;
       this.currentUser = firebase.auth().currentUser;
     }
+    const tweetsSnapshots = await StoreDB.collection("tweets");
+    tweetsSnapshots.onSnapshot(querySnapshot => {
+      querySnapshot.docs.forEach(doc => {
+        const databaseTweet = doc.data();
+        const foundLocalTweet = this.tweets.find(el => el.id === doc.id);
+        if (!foundLocalTweet) {
+          this.tweets.push({ id: doc.id, ...databaseTweet });
+        } else if (foundLocalTweet.isLiked !== databaseTweet.isLiked) {
+          foundLocalTweet.isLiked = databaseTweet.isLiked
+        }
+      });
+    });
   },
   methods: {
-    logout: function (){
-      firebase.auth().signOut().then(() => {
-        this.$router.push('/login');
+    async writeToFirestore(username, tweetContent) {
+      const ref = StoreDB.collection("tweets");
+      const tweets = {
+        username,
+        tweetContent,
+        isLiked: false
+      };
+      try {
+        await ref.add(tweets);
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    logout: function() {
+      auth.signOut().then(() => {
+        this.$router.push("/login");
       });
     },
     addTweet(e) {
       e.preventDefault();
-      const newTweet = {
-        username: this.newName,
-        content: this.newContent,
-        like: false,
-        replies: [],
-        id: Math.random()
-      };
-      this.tweets.push(newTweet);
+      this.writeToFirestore(this.newName, this.newContent);
     },
     clearForm() {
       this.newName = "";
@@ -106,7 +124,9 @@ export default {
     },
     like(id) {
       let findedTweet = this.tweets.find(e => e.id === id);
-      findedTweet.like = !findedTweet.like;
+      StoreDB.collection("tweets").doc(id).update({
+        isLiked: !findedTweet.isLiked,
+      })
     }
   }
 };
