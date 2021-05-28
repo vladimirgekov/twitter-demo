@@ -35,7 +35,7 @@
       <img class="footer__icon" src="../assets/twitter.svg" />
       <img class="footer__icon" src="../assets/viber.svg" />
       <img class="footer__icon" src="../assets/whatsapp.svg" />
-      <p class="footer__description">Thank you for using</p>
+      <p class="footer__description">Thank you for using!</p>
     </div>
   </div>
 </template>
