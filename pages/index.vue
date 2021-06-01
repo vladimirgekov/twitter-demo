@@ -36,10 +36,15 @@
             <img class="main__form__user__photo" src="../assets/user-big.png" />
             <h2 class="tweets__name">{{ tweet.username }} post:</h2>
           </div>
-          <p class="tweets__content">{{ tweet.tweetContent }}</p>
+          <p v-if="!tweet.isEditing" class="tweets__content">{{ tweet.tweetContent }}</p>
+          <input v-else type="text" class="input" v-model="tweet.tweetContent"/>
           <div class="button-container">
-            <img :src="`${tweet.isLiked ? require('../assets/star.png'): require('../assets/emptystar.png')}`"
-              v-on:click="() => like(tweet.id)" :key="tweet.id"/>
+            <img :src="`${tweet.isLiked ? require('../assets/star.png') : require('../assets/emptystar.png')}`" v-on:click="() => like(tweet.id)"/>
+            <button v-if="!tweet.isEditing" class="edit" v-on:click="editTweet(tweet.id)">Edit tweet</button>
+            <div class="options" v-else>
+              <button class="option" v-on:click="()=>saveTweet(tweet.id,'tweetConcent',tweet.tweetContent)">Save tweet</button>
+              <button class="option" @click="tweet.isEditing = false">Cancel</button>
+            </div>
           </div>
         </div>
       </div>
@@ -61,7 +66,7 @@
 </template>
 
 <script>
-import firebase from 'firebase';
+import firebase from "firebase";
 import { auth, StoreDB } from "~/plugins/firebase.js";
 export default {
   data() {
@@ -70,11 +75,12 @@ export default {
       newContent: "",
       tweets: [],
       isLoggedIn: false,
-      currentUser: false
+      currentUser: false,
+      isEditing: false
     };
   },
   async created() {
-    if(firebase.auth().currentUser){
+    if (firebase.auth().currentUser) {
       this.isLoggedIn = true;
       this.currentUser = firebase.auth().currentUser;
     }
@@ -84,9 +90,9 @@ export default {
         const databaseTweet = doc.data();
         const foundLocalTweet = this.tweets.find(el => el.id === doc.id);
         if (!foundLocalTweet) {
-          this.tweets.push({ id: doc.id, ...databaseTweet });
+          this.tweets.push({ isEditing: false, id: doc.id, ...databaseTweet });
         } else if (foundLocalTweet.isLiked !== databaseTweet.isLiked) {
-          foundLocalTweet.isLiked = databaseTweet.isLiked
+          foundLocalTweet.isLiked = databaseTweet.isLiked;
         }
       });
     });
@@ -97,7 +103,8 @@ export default {
       const tweets = {
         username,
         tweetContent,
-        isLiked: false
+        isLiked: false,
+        isEdited: false
       };
       try {
         await ref.add(tweets);
@@ -114,6 +121,15 @@ export default {
       e.preventDefault();
       this.writeToFirestore(this.newName, this.newContent);
     },
+    editTweet(id) {
+      let editedTweet = this.tweets.find(e => e.id === id);
+      editedTweet.isEditing = true;
+    },
+    saveTweet(id,changedProperty,changedValue) {
+      this.updateTweet(id,changedProperty,changedValue);
+      let findedTweet = this.tweets.find(e => e.id === id);
+      findedTweet.isEditing = false;
+    },
     clearForm() {
       this.newName = "";
       this.newContent = "";
@@ -124,8 +140,11 @@ export default {
     },
     like(id) {
       let findedTweet = this.tweets.find(e => e.id === id);
+      this.updateTweet(id,'isLiked',!findedTweet.isLiked);
+    },
+    updateTweet(id,changedProperty,changedValue){
       StoreDB.collection("tweets").doc(id).update({
-        isLiked: !findedTweet.isLiked,
+        [changedProperty]: changedValue,
       })
     }
   }
@@ -168,7 +187,6 @@ export default {
   font-size: 20px;
   font-weight: 500;
 }
-
 .main {
   display: flex;
   flex-direction: column;
@@ -178,7 +196,6 @@ export default {
   background-repeat: no-repeat;
   background-size: cover;
 }
-
 .main__form {
   width: 50%;
   margin: 0 auto;
@@ -187,16 +204,13 @@ export default {
   border-radius: 20px;
   border: 3px solid black;
 }
-
 .main__form__username__info {
   display: flex;
   align-items: center;
 }
-
 .main__form__user__photo {
   width: 50px;
 }
-
 .main__form__username {
   display: flex;
   justify-content: space-around;
@@ -204,7 +218,6 @@ export default {
   padding-top: 20px;
   padding-bottom: 50px;
 }
-
 .main__form__username__text {
   padding-left: 15px;
   text-align: center;
@@ -212,7 +225,6 @@ export default {
   font-size: 24px;
   font-weight: 600;
 }
-
 .main__form__username__input {
   font-size: 20px;
   width: 45%;
@@ -220,13 +232,11 @@ export default {
   border-radius: 10px;
   border: 2px solid black;
 }
-
 .main__form__tweet {
   display: flex;
   flex-direction: column;
   margin-bottom: 30px;
 }
-
 .main__form__tweet__text {
   padding-bottom: 10px;
   text-align: center;
@@ -234,7 +244,6 @@ export default {
   font-size: 24px;
   font-weight: 600;
 }
-
 .main__form__tweet__input {
   padding: 10px 20px;
   border-radius: 10px;
@@ -243,7 +252,6 @@ export default {
   border: 2px solid black;
   font-size: 24px;
 }
-
 .main__form__tweet__button {
   margin: 0 auto;
   margin-bottom: 20px;
@@ -258,7 +266,6 @@ export default {
   border: 3px solid black;
   border-radius: 20px;
 }
-
 .tweets-container {
   width: 50%;
   margin: 0 auto;
@@ -267,14 +274,12 @@ export default {
   border: 3px solid black;
   border-radius: 20px;
 }
-
 .tweets__title {
   text-align: center;
   color: white;
   margin-bottom: 20px;
   font-weight: 700;
 }
-
 .tweets {
   text-align: center;
   background: white;
@@ -285,23 +290,24 @@ export default {
   border: 2px solid black;
   border-radius: 15px;
 }
-
 .tweets__info {
   display: flex;
 }
-
 .tweets__name {
   margin-bottom: 10px;
   padding-left: 15px;
 }
-
 .tweets__content {
   margin-bottom: 20px;
   padding-left: 65px;
   text-align: left;
   font-size: 18px;
 }
-
+.input {
+  margin-bottom: 20px;
+  min-width: 75%;
+  padding: 10px;
+}
 .tweets__button {
   align-items: center;
   display: flex;
@@ -310,24 +316,45 @@ export default {
   border-radius: 10px;
   border: 2px solid dodgerblue;
 }
-
+.button-container {
+  display: flex;
+  justify-content: space-evenly;
+}
+.edit {
+  background-color: dodgerblue;
+  color: white;
+  font-size: 15px;
+  border: 2px solid black;
+  border-radius: 10px;
+  min-width: 100px;
+}
+.options{
+  display: flex;
+  justify-content: space-evenly;
+  min-width: 400px;
+}
+.option {
+  background-color: dodgerblue;
+  color: white;
+  font-size: 15px;
+  border: 2px solid black;
+  border-radius: 10px;
+  min-width: 100px;
+}
 .button__text {
   margin: 0 auto;
   color: dodgerblue;
   font-size: 15px;
 }
-
 .footer {
   display: flex;
   background-color: dodgerblue;
   justify-content: space-between;
 }
-
 .footer__left {
   display: flex;
   align-items: center;
 }
-
 .footer__title {
   padding-left: 20px;
   padding-right: 10px;
@@ -336,15 +363,12 @@ export default {
   font-weight: 700;
   min-width: 180px;
 }
-
 .footer__image {
   width: 100px;
 }
-
 .footer__icon {
   width: 50px;
 }
-
 .footer__description {
   align-items: center;
   display: flex;
