@@ -70,12 +70,10 @@ export default {
   background-color: dodgerblue;
   justify-content: space-between;
 }
-
 .footer__left {
   display: flex;
   align-items: center;
 }
-
 .footer__title {
   padding-left: 20px;
   padding-right: 10px;
@@ -84,15 +82,12 @@ export default {
   font-weight: 700;
   min-width: 180px;
 }
-
 .footer__image {
   width: 100px;
 }
-
 .footer__icon {
   width: 50px;
 }
-
 .footer__description {
   align-items: center;
   display: flex;
@@ -101,4 +96,5 @@ export default {
   font-size: 20px;
   font-weight: 500;
 }
+
 </style>

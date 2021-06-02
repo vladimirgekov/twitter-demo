@@ -12,7 +12,6 @@
       </div>
     </div>
 </template>
-
 <script>
 import firebase from 'firebase';
 export default {
@@ -63,7 +62,6 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 .header {
   display: flex;
@@ -99,5 +97,4 @@ export default {
   color: white;
   font-size: 20px;
   font-weight: 500;
-}
-</style>
+}</style>
